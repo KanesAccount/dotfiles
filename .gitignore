@@ -1,2 +1,2 @@
-# Remove Raycast node_modules
-.config/raycast/extensions/node_modules
+# Remove node_modules
+node_modules
