@@ -1,0 +1,144 @@
+-- since this is just an example spec, don't actually load anything here and return an empty spec
+-- stylua: ignore
+if true then return {} end
+
+-- every spec file under the "plugins" directory will be loaded automatically by lazy.nvim
+--
+-- In your plugin files, you can:
+-- * add extra plugins
+-- * disable/enabled LazyVim plugins
+-- * override the configuration of LazyVim plugins
+-- return {
+--   -- change flash config
+--   {
+--     "folke/flash.nvim",
+--     opts = {
+--       modes = {
+--         char = {
+--           jump_labels = true,
+--         },
+--       },
+--     },
+--     keys = {
+--       {
+--         "s",
+--         mode = { "n", "x", "o" },
+--         function()
+--           require("flash").jump()
+--         end,
+--         desc = "Flash",
+--       },
+--       {
+--         "S",
+--         mode = { "n", "x", "o" },
+--         function()
+--           require("flash").treesitter()
+--         end,
+--         desc = "Flash Treesitter",
+--       },
+--       {
+--         "r",
+--         mode = "o",
+--         function()
+--           require("flash").remote()
+--         end,
+--         desc = "Remote Flash",
+--       },
+--       {
+--         "L",
+--         mode = { "n", "o", "x" },
+--         function()
+--           require("flash").treesitter_search()
+--         end,
+--         desc = "Treesitter Search",
+--       },
+--       {
+--         "<c-s>",
+--         mode = { "c" },
+--         function()
+--           require("flash").toggle()
+--         end,
+--         desc = "Toggle Flash Search",
+--       },
+--     },
+--   },
+--
+--   -- disable trouble
+--   { "folke/trouble.nvim", enabled = false },
+--
+--   -- add symbols-outline
+--   {
+--     "simrat39/symbols-outline.nvim",
+--     cmd = "SymbolsOutline",
+--     keys = { { "<leader>cs", "<cmd>SymbolsOutline<cr>", desc = "Symbols Outline" } },
+--     config = true,
+--   },
+--
+--   -- override nvim-cmp and add cmp-emoji
+--   {
+--     "hrsh7th/nvim-cmp",
+--     dependencies = { "hrsh7th/cmp-emoji" },
+--     ---@param opts cmp.ConfigSchema
+--     opts = function(_, opts)
+--       local cmp = require("cmp")
+--       opts.sources = cmp.config.sources(vim.list_extend(opts.sources, { { name = "emoji" } }))
+--     end,
+--   },
+--
+--   -- change some telescope options and a keymap to browse plugin files
+--   {
+--     "nvim-telescope/telescope.nvim",
+--     dependencies = {},
+--     keys = {
+--       -- add a keymap to browse plugin files
+--       -- stylua: ignore
+--       {
+--         "<leader>fp",
+--         function() require("telescope.builtin").find_files({ cwd = require("lazy.core.config").options.root }) end,
+--         desc = "Find Plugin File",
+--       },
+--     },
+--
+--     -- change some options
+--     opts = {
+--       defaults = {
+--         layout_strategy = "horizontal",
+--         layout_config = { prompt_position = "top" },
+--         sorting_strategy = "ascending",
+--         winblend = 0,
+--       },
+--     },
+--   },
+--
+--   -- add telescope-fzf-native
+--   {
+--     "telescope.nvim",
+--     dependencies = {
+--       "nvim-telescope/telescope-fzf-native.nvim",
+--       build = "make",
+--       config = function()
+--         require("telescope").load_extension("fzf")
+--       end,
+--     },
+--   },
+--
+--   -- add telescope livegrep args
+--   {
+--     "nvim-telescope/telescope.nvim",
+--     dependencies = {
+--       {
+--         "nvim-telescope/telescope-live-grep-args.nvim",
+--         -- This will not install any breaking changes.
+--         -- For major updates, this must be adjusted manually.
+--         version = "^1.0.0",
+--       },
+--     },
+--     config = function()
+--       require("telescope").load_extension("live_grep_args")
+--     end,
+--   },
+--
+--   -- for typescript, LazyVim also includes extra specs to properly setup lspconfig,
+--   -- treesitter, mason and typescript.nvim. So instead of the above, you can use:
+--   { import = "lazyvim.plugins.extras.lang.typescript" },
+-- }

@@ -1,0 +1,23 @@
+#!/bin/bash
+# Clean the list of available orgs to remove expired options
+sf org list --clean --no-prompt
+
+# List authorized orgs and extract username and instance URL
+org_list=$(sf org auth list --json | jq -r '.result[] | {username: .username, instanceUrl: .instanceUrl, alias: .alias}')
+# Prompt user to select an org
+echo "Select an org:"
+select org in $(echo "$org_list" | jq -r '.alias'); do
+	# Get the selected org's username and instance URL
+	alias=$(echo "$org_list" | jq -r --arg org "$org" 'select(.alias == $org).alias')
+	username=$(echo "$org_list" | jq -r --arg org "$org" 'select(.alias == $org).username')
+	instance_url=$(echo "$org_list" | jq -r --arg org "$org" 'select(.alias == $org).instanceUrl')
+	break
+done
+# Display user details and extract password
+user_details=$(sf org display user -u $username --json)
+password=$(echo $user_details | jq -r ".result.password")
+# Set the selected org as default
+echo "Username: $username"
+echo "Password: $password"
+
+sf org login web --instance-url $instance_url --set-default

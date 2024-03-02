@@ -1,0 +1,54 @@
+#!/bin/sh
+## Handy script for spinning up logging entrys for the current hour for either bookings / kiosk / user
+### Usage: 'el u' - enables user logging for the next hour, 'el k' - enables kiosk logging for the next hour, 'el b' - enables booking logging for the next hour
+log_type=$1
+
+startDateTime() {
+	date -u +"%Y-%m-%dT%H:%M:%S.000+0000"
+}
+
+expiryDateTime() {
+	date -v+1H -u +"%Y-%m-%dT%H:%M:%S.000+0000"
+}
+
+DEBUGLEVEL=$(sf data query --query "SELECT Id, DeveloperName FROM DebugLevel" --json --use-tooling-api | jq ".result.records[0].Id" -r)
+
+if [[ ${log_type} == 'b' ]]; then
+	BOOKINGSID=$(sfdx force:data:soql:query -q "select id,name from user where name='Bookings Site Guest User'" --json | jq ".result.records[0].Id" -r)
+	BOOKINGSTRACEID=$(sfdx force:data:soql:query --query "SELECT Id, DebugLevel.DeveloperName, ExpirationDate, TracedEntityId FROM Traceflag WHERE TracedEntityId IN (SELECT ID from USER WHERE ID = '${BOOKINGSID}')" --usetoolingapi --json | jq ".result.records[0].Id" -r)
+	if [[ ${BOOKINGSTRACEID} != null ]]; then
+		sf data record update --sobject TraceFlag --record-id $BOOKINGSTRACEID -v "StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	else
+		sf data record create --sobject TraceFlag -v "TracedEntityId=$BOOKINGSID LogType=USER_DEBUG DebugLevelId=$DEBUGLEVEL StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	fi
+fi
+
+if [[ ${log_type} == 'k' ]]; then
+	KIOSKID=$(sfdx force:data:soql:query -q "SELECT Id, Name FROM User WHERE Name='Kiosk Site Guest User'" --json | jq ".result.records[0].Id" -r)
+	KIOSKTRACEID=$(sfdx force:data:soql:query --query "SELECT Id, DebugLevel.DeveloperName, ExpirationDate, TracedEntityId FROM Traceflag WHERE TracedEntityId IN (SELECT Id FROM User WHERE Id = '${KIOSKID}')" --use-tooling-api --json | jq ".result.records[0].Id" -r)
+	if [[ ${KIOSKTRACEID} != null ]]; then
+		sf data record update --sobject TraceFlag --record-id $KIOSKTRACEID -v "StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	else
+		sf data record create --sobject TraceFlag -v "TracedEntityId=$KIOSKID LogType=USER_DEBUG DebugLevelId=$DEBUGLEVEL StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	fi
+fi
+
+if [[ ${log_type} == 'u' ]]; then
+	USERID=$(sfdx force:data:soql:query -q "select id,name from user where name='User User'" --json | jq ".result.records[0].Id" -r)
+	USERTRACEID=$(sfdx force:data:soql:query --query "SELECT Id, DebugLevel.DeveloperName, ExpirationDate, TracedEntityId FROM Traceflag WHERE TracedEntityId IN (SELECT ID from USER WHERE ID = '${USERID}')" --usetoolingapi --json | jq ".result.records[0].Id" -r)
+	if [[ ${USERTRACEID} != null ]]; then
+		sf data record update --sobject TraceFlag --record-id $USERTRACEID -v "StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	else
+		sf data record create --sobject TraceFlag -v "TracedEntityId=$USERID LogType=USER_DEBUG DebugLevelId=$DEBUGLEVEL StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	fi
+fi
+
+if [[ ${log_type} == 'bn' ]]; then
+	BNID=$(sfdx force:data:soql:query -q "SELECT Id, Name FROM User WHERE Name='BookNow Site Guest User'" --json | jq ".result.records[0].Id" -r)
+	BNTRACEID=$(sfdx force:data:soql:query --query "SELECT Id, DebugLevel.DeveloperName, ExpirationDate, TracedEntityId FROM Traceflag WHERE TracedEntityId IN (SELECT Id FROM User WHERE Id = '${BNID}')" --use-tooling-api --json | jq ".result.records[0].Id" -r)
+	if [[ ${BNTRACEID} != null ]]; then
+		sf data record update --sobject TraceFlag --record-id $BNTRACEID -v "StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	else
+		sf data record create --sobject TraceFlag -v "TracedEntityId=$BNID LogType=USER_DEBUG DebugLevelId=$DEBUGLEVEL StartDate=$(startDateTime) ExpirationDate=$(expiryDateTime)" --use-tooling-api --json
+	fi
+fi

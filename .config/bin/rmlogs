@@ -1,0 +1,5 @@
+#!/bin/sh
+
+sf data query -q "SELECT Id FROM ApexLog" -r "csv" >outApexLog.csv
+sf data delete bulk -s ApexLog -f outApexLog.csv
+rm outApexLog.csv

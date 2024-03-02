@@ -1,0 +1,71 @@
+#!/bin/sh
+
+declare reqnum
+declare confirmation
+CYAN='\033[1;36m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+if [ -z "$1" ]
+	then
+		echo -n -e "${CYAN}Please enter your requirement number / branch name: ${NC}"
+		read -r reqnum
+		echo -n -e "${YELLOW}Running this script will overwrite your local changes with the master. Are you sure you want to continue? (y/n): ${NC}"
+		read -r confirmation
+	else
+		echo -e "${CYAN}[DEBUG]${NC} Forcing script entry with branch name '$1'"
+		reqnum=$1
+		confirmation='y'
+fi
+
+if [ $confirmation = 'y' ]; then
+
+	echo -e "${CYAN}[DEBUG]${NC} Checking if branch ${CYAN}$1${NC} exists"
+	branch=${reqnum}
+	existed_in_remote=$(git ls-remote --heads origin ${branch})
+
+	if [[ -z ${existed_in_remote} ]]; then
+		echo -e "${CYAN}[DEBUG]${NC} Resetting your git environment"
+		git reset --hard >/dev/null
+
+		echo -e "${CYAN}[DEBUG]${NC} Checking out into master"
+		git checkout master >/dev/null
+
+		echo -e "${CYAN}[DEBUG]${NC} Pulling from master"
+		git pull >/dev/null
+
+		echo -e "${CYAN}[DEBUG]${NC} Cleanup metadata for deployment"
+		eval "sed -i '' -e 's/OrgWideEmailAddress/CurrentUser/' 'force-app/main/default/workflows/Booking__c.workflow-meta.xml'"
+		eval "rm -rf force-app/main/default/analyticSnapshots"
+
+		echo -e "${CYAN}[DEBUG]${NC} Checking out into your new branch"
+		eval "git checkout -b $reqnum > /dev/null"
+	else
+		echo -e "${CYAN}[DEBUG]${NC} Checking out into your existing branch"
+		eval "git checkout $reqnum"
+	fi
+
+	ulimit -Hn 20000
+
+	echo -e "${CYAN}[DEBUG]${NC} Spinning up scratch org"
+	eval "sf org create scratch -f 'config/project-scratch-def.json' --set-default -w 30 --duration-days 21 -a '$reqnum'"
+
+	echo -e "${CYAN}[DEBUG]${NC} Deploying metadata to scratch org"
+	sf project deploy start --source-dir ./force-app/main/default --json --target-org $reqnum
+	echo -e "${CYAN}[DEBUG]${NC} Inserting test data, assigning permissions, creating custom settings"
+	sf apex run -f ./scripts/apex/deployToScratchActions
+
+	echo -e "${CYAN}[DEBUG]${NC} Publishing communities"
+	sf community publish --name "Kiosk"
+	sf community publish --name "newHome"
+
+	echo -e "${CYAN}[DEBUG]${NC} Grabbing login credentials"
+	sf org display user
+	sf org generate password
+
+	echo -e "${CYAN}[DEBUG]${NC} Finished! Script ran in $SECONDS seconds"
+
+else
+	echo -e "${CYAN}[DEBUG]${NC} Exiting. No changes made."
+	exit
+fi
